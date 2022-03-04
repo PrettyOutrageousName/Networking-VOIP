@@ -67,7 +67,7 @@ public class AudioReceiverThread implements Runnable {
 
 
 
-                ByteBuffer unwrapDecrypt = ByteBuffer.allocate(buffer.length);
+                ByteBuffer unwrapDecrypt = ByteBuffer.allocate(buffer.length);   // Create buffer for Cipher
                 ByteBuffer cipherText = ByteBuffer.wrap(buffer);
 
 
