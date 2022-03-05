@@ -1,8 +1,8 @@
-import java.lang.reflect.Array;
 import java.net.*;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+
 
 import CMPC3M06.AudioPlayer;
 import javax.sound.sampled.LineUnavailableException;
@@ -12,6 +12,7 @@ public class AudioReceiverThread implements Runnable {
     static DatagramSocket receiving_socket;
     static AudioPlayer player;
     int key = 15;
+    short authenticationKey = 10;
 
     public void start() {
         Thread thread = new Thread(this);
@@ -56,55 +57,34 @@ public class AudioReceiverThread implements Runnable {
         while (running) {
 
             try {
-                //Receive a DatagramPacket (note that the string cant be more than 512 chars)
-                byte[] buffer = new byte[514];
 
+                byte[] buffer = new byte[514]; // Create our byte array/buffer
 
+                DatagramPacket packet = new DatagramPacket(buffer, 0, buffer.length); // Create/Setup our Datagram Packet to receive data
+                receiving_socket.receive(packet); // Receive data
 
-                DatagramPacket packet = new DatagramPacket(buffer, 0, buffer.length);
+                ByteBuffer unwrapDecrypt = ByteBuffer.allocate(buffer.length);   // Create buffer for Final Decrypted data
+                ByteBuffer cipherText = ByteBuffer.wrap(buffer); // Add encrypted data to our temp buffer to decrypt
 
-                receiving_socket.receive(packet);
-
-
-
-                ByteBuffer unwrapDecrypt = ByteBuffer.allocate(buffer.length);   // Create buffer for Cipher
-                ByteBuffer cipherText = ByteBuffer.wrap(buffer);
-
-
-
-
-
+                // Start Decryption
                 for(int j = 0; j < buffer.length/4; j++) {
                     int fourByte = cipherText.getInt();
                     fourByte = fourByte ^ key; // XOR decrypt
                     unwrapDecrypt.putInt(fourByte);
                 }
-                byte[] decryptedBlock = unwrapDecrypt.array();
+                // Finish Decryption
 
 
-                ByteBuffer voippacket = ByteBuffer.allocate(buffer.length);
-                voippacket.put(decryptedBlock);
-                short authenticationKey = 10;
+                if(unwrapDecrypt.getShort(0) == authenticationKey ){  // Check if header matches our key
 
-                if(voippacket.getShort() == authenticationKey ){
+                    byte[] decryptedBlock = Arrays.copyOfRange(unwrapDecrypt.array(), 2, 514); // Extract Only Voip bytes from our decrypted array
 
-                    System.out.println("GOOOD HEADER");
+                    player.playBlock(decryptedBlock); // Play Decrypted Block
+                   // System.out.println("Good Header");
+
                 } else{
-                    System.out.println("bad header!!!!!!!!!");
+                    System.out.println("Bad Header");
                 }
-
-
-
-
-
-                //   System.out.println( "I am received buffer : " + Arrays.toString(buffer));
-              //  System.out.println("I am rec decrypted : " + Arrays.toString(decryptedBlock));
-
-
-
-
-                // System.out.println("Playing Audio...");
-                player.playBlock(decryptedBlock);
 
             } catch (IOException e) {
                 e.printStackTrace();

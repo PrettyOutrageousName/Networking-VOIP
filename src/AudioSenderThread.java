@@ -11,7 +11,8 @@ public class AudioSenderThread implements Runnable{
 
     static DatagramSocket sending_socket;
     static AudioRecorder recorder;
-    int key = 15;
+    int key = 15; // Set XOR key
+    short authenticationKey = 11; //set header key
 
 
 
@@ -63,49 +64,29 @@ public class AudioSenderThread implements Runnable{
         
         while (running){
             try{
-                byte[] buffer = recorder.getBlock(); // encrypt this
+                byte[] block = recorder.getBlock(); // Create Byte Block and add data from recorder
 
+                ByteBuffer unwrapEncrypt = ByteBuffer.allocate(514); // Allocate size of Encryption buffer to length of our Main buffer
+                ByteBuffer plainText = ByteBuffer.allocate(514); // Allocate our plaintext buffer to size of full packet
 
+                plainText.putShort(authenticationKey); // Add our Header/Auth key to our plaintext buffer
+                plainText.put(block); // Add our recorded bytes (Block) to our plaintext buffer
+                plainText.rewind(); // Rewind plain text to the start of the buffer for Encryption
 
-                //Encryption block
-                ByteBuffer unwrapEncrypt = ByteBuffer.allocate(buffer.length); //byte buffer
-
-
-
-                ByteBuffer plainText = ByteBuffer.allocate(514); // adding buffer to new bytebuffer "plainText"
-                short authenticationKey = 10; //set key
-                plainText.putShort(authenticationKey);
-                plainText.wrap(buffer);
-                ////////////ENCRYPT
-                for( int j = 0; j < buffer.length/4; j++) {
+                // Start our Encryption
+                for( int j = 0; j < plainText.array().length/4; j++) {
                     int fourByte = plainText.getInt();
                     fourByte = fourByte ^ key; // XOR operation with key
                     unwrapEncrypt.putInt(fourByte);
                 }
-                ///////////ENCRYPT
+                // Finished Encryption
+
+                byte[] encryptedBlock = unwrapEncrypt.array(); // Create our Encrypted block and add our Encrypted array
+
+                DatagramPacket packet = new DatagramPacket(encryptedBlock, encryptedBlock.length, clientIP, PORT); // Create our packet
+                sending_socket.send(packet); // Send our packet
 
 
-                ////////finished
-                byte[] encryptedBlock = unwrapEncrypt.array(); // finished encrypted block
-                ///////finished
-
-
-                ///////header add
-
-
-
-
-
-
-
-
-                DatagramPacket packet = new DatagramPacket(encryptedBlock, encryptedBlock.length, clientIP, PORT);
-
-
-                sending_socket.send(packet);
-              //  System.out.println( "I am sent buffer : " + Arrays.toString(buffer));
-                //System.out.println("I am sent encrypted : " + Arrays.toString(encryptedBlock));
-                    
             } catch (IOException e) {
                 e.printStackTrace();
             }
