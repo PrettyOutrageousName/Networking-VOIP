@@ -12,7 +12,7 @@ public class AudioSenderThread implements Runnable{
     static DatagramSocket sending_socket;
     static AudioRecorder recorder;
     int key = 15; // Set XOR key
-    short authenticationKey = 11; //set header key
+    short authenticationKey = 10; //set header key
 
 
 
