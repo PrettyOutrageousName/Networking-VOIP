@@ -4,12 +4,15 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import CMPC3M06.AudioRecorder;
+import uk.ac.uea.cmp.voip.DatagramSocket2;
+import uk.ac.uea.cmp.voip.DatagramSocket4;
+
 import javax.sound.sampled.LineUnavailableException;
 
 
 public class AudioSenderThread implements Runnable{
 
-    static DatagramSocket sending_socket;
+    static DatagramSocket4 sending_socket;
     static AudioRecorder recorder;
     int key = 15; // Set XOR key
     short authenticationKey = 10; //set header key
@@ -49,7 +52,7 @@ public class AudioSenderThread implements Runnable{
         
         //DatagramSocket sending_socket;
         try{
-		sending_socket = new DatagramSocket();
+		sending_socket = new DatagramSocket4();
 	} catch (SocketException e){
                 System.out.println("ERROR: TextSender: Could not open UDP socket to send from.");
 		e.printStackTrace();

@@ -10,8 +10,8 @@ public class TextDuplex {
     
     public static void main (String[] args){
         
-        AudioReceiverThread receiver = new AudioReceiverThread();
-        AudioSenderThread sender = new AudioSenderThread();
+        AudioReceiverThread2 receiver = new AudioReceiverThread2();
+        AudioSenderThread2 sender = new AudioSenderThread2();
         
         receiver.start();
         sender.start();
